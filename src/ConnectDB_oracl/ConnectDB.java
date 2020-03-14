@@ -9,30 +9,21 @@ import java.sql.*;
 public class ConnectDB {
 
     private int n;
-    private String url;
-    private String user;
-    private String password;
     private Statement statement;
     private Connection cn;
+    private DBCredentials credentials;
 
     public void setN(int n) {
         this.n = n;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public ConnectDB(DBCredentials credentials) {
+        this.credentials = credentials;
     }
 
     public void connectDBOrcl() throws SQLException, IOException, SAXException, ParserConfigurationException {
 
+        setN(credentials.getNumber());
         int[] temp = new int[n];
 
         try {
@@ -44,14 +35,14 @@ public class ConnectDB {
 
 
         try {
-            cn =  DriverManager.getConnection (url,user,password);
+            cn =  DriverManager.getConnection (credentials.getUrl(), credentials.getUser(), credentials.getPassword());
 
             cn.setAutoCommit(false);
 
             statement = cn.createStatement();
-            statement.executeUpdate("delete from test");
+            statement.executeUpdate("delete from test_java");
 
-            PreparedStatement preparedStatement = cn.prepareStatement("insert into test values (?)");
+            PreparedStatement preparedStatement = cn.prepareStatement("insert into test_java values (?)");
 
             int a = 1;
             while (a <= n) {
@@ -61,7 +52,7 @@ public class ConnectDB {
             }
             preparedStatement.executeBatch();
 
-            ResultSet rs = statement.executeQuery ("SELECT FIELD FROM test");
+            ResultSet rs = statement.executeQuery ("SELECT * FROM test_java");
 
             int b = 0;
             while (rs.next()) {
@@ -101,12 +92,12 @@ public class ConnectDB {
         xml.summaField();
     }
 
-    public static void main(String[] args) throws SQLException, ParserConfigurationException, SAXException, IOException {
-        ConnectDB connectDB = new ConnectDB();
-        connectDB.setUrl("jdbc:oracle:thin:@localhost:1521:dborcl");
-        connectDB.setUser("company");
-        connectDB.setPassword("123456");
-        connectDB.setN(50);
-        connectDB.connectDBOrcl();
-    }
+//    public static void main(String[] args) throws SQLException, ParserConfigurationException, SAXException, IOException {
+//        ConnectDB connectDB = new ConnectDB();
+//        connectDB.setUrl("jdbc:oracle:thin:@localhost:1521:dborcl");
+//        connectDB.setUser("company");
+//        connectDB.setPassword("123456");
+//        connectDB.setN(10);
+//        connectDB.connectDBOrcl();
+//    }
 }
