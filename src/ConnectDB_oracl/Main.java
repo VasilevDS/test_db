@@ -15,11 +15,19 @@ public class Main {
         credentials.setUrl("jdbc:oracle:thin:@localhost:1521:dborcl");
         credentials.setUser("company");
         credentials.setPassword("123456");
-        credentials.setNumber(50);
+        credentials.setNumber(5000000);
 
-        ConnectDB connectDB = new ConnectDB(credentials);
+        long startTime =System.currentTimeMillis();
         try {
-            connectDB.connectDBOrcl();
+            ConnectDB connectDB = new ConnectDB(credentials);
+            //connectDB.connectDBOrcl();
+            connectDB.dataInsertion();
+            int[] temp = connectDB.dataSelect();
+            connectDB.close();
+            XML xml = new XML();
+            xml.createXML(temp);
+            xml.XslTransform();
+            xml.summaField();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -29,5 +37,7 @@ public class Main {
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         }
+        long timeSpent =System.currentTimeMillis()- startTime;
+        System.out.println("lead time: "+ timeSpent +" ms");
     }
 }
