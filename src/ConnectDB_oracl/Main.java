@@ -1,9 +1,8 @@
 package ConnectDB_oracl;
 
-import org.xml.sax.SAXException;
-
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
+import javax.xml.transform.TransformerException;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -13,10 +12,20 @@ public class Main {
 
         DBCredentials credentials = new DBCredentials();
 
-        credentials.setUrl("jdbc:oracle:thin:@localhost:1521:dborcl");
-        credentials.setUser("company");
-        credentials.setPassword("123456");
-        credentials.setNumber(15);
+        String url = "jdbc:oracle:thin:@localhost:1521:dborcl";
+        String user = "company";
+        String password = "123456";
+        int numbN = 2000000;
+
+        credentials.setUrl(url);
+        credentials.setUser(user);
+        credentials.setPassword(password);
+        try {
+            credentials.setNumberN(numbN);
+        } catch (NumberNNotFitException e) {
+            System.out.println("The number N must be greater than 0");
+            return;
+        }
 
         long startTime =System.currentTimeMillis();
         ConnectDB connectDB = null;
@@ -28,10 +37,11 @@ public class Main {
             // запрос данных из таблицы
             int[] temp = connectDB.dataSelect();
             connectDB.close();
-            XML xml = new XML();
-            xml.createXML(temp);
-            xml.XslTransform();
-            xml.summaField();
+
+
+            XML xml = new XML(temp);
+            xml.createXML();
+            xml.totalFieldXmlTwo();
         } catch (SQLException ex){
             Connection connection = connectDB.getCn();
             if (connection != null) {
@@ -48,13 +58,13 @@ public class Main {
                 System.out.println("---");
                 ex = ex.getNextException();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
+        } catch (NumberNNotFitException e) {
             e.printStackTrace();
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
-        } catch (NumberNNotFitException e) {
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
             e.printStackTrace();
         }
         long timeSpent =System.currentTimeMillis()- startTime;

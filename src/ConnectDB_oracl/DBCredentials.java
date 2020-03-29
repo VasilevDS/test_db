@@ -5,7 +5,7 @@ public final class DBCredentials {
     private String url;
     private String password;
     private String user;
-    private int number;
+    private int numberN;
 
     public String getUrl() {
         return url;
@@ -31,11 +31,10 @@ public final class DBCredentials {
         this.user = user;
     }
 
-    public int getNumber() {
-        return number;
-    }
+    public int getNumberN() { return numberN; }
 
-    public void setNumber(int number) {
-        this.number = number;
+    public void setNumberN(int numberN) throws NumberNNotFitException {
+        if(numberN>0) this.numberN = numberN;
+        else throw new NumberNNotFitException("number n does not match");
     }
 }

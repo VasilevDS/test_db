@@ -12,16 +12,13 @@ public class ConnectDB {
     private final String queryINSERT = "insert into " + tableName + " values (?)";
     private final String querySELECT = "SELECT * FROM " + tableName;
 
-    public void setN(int n) throws NumberNNotFitException {
-        if(n>0) this.n = n;
-        else throw new NumberNNotFitException("number n does not match");
-    }
+    public void setN(int n) { this.n = n; }
 
     public Connection getCn() { return cn; }
 
     public ConnectDB(DBCredentials credentials) throws SQLException, NumberNNotFitException {
         this.credentials = credentials;
-        setN(credentials.getNumber());
+        setN(credentials.getNumberN());
         cn = connection();
         cn.setAutoCommit(false);
         statement = cn.createStatement();
@@ -75,8 +72,8 @@ public class ConnectDB {
         // Если в таблице находились записи, то они удаляются перед вставкой
         // (Это условие можно удалить и оставить удаление в любом случае)
         if (tableCheck(tableName)) {
-            statement.executeUpdate("delete from " + tableName);
             System.out.println("clean table");
+            statement.executeUpdate("delete from " + tableName);
         }
 
         PreparedStatement preparedStatement = cn.prepareStatement(queryINSERT);

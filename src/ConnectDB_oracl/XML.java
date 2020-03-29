@@ -2,107 +2,107 @@ package ConnectDB_oracl;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.Attributes;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.math.BigInteger;
 
-public class XML 
-{
+public class XML {
+    private Document document;
+    private int[] recList;
+    private File fileXMLOne = new File("test_1.xml");
+    private File fileXMLTwo = new File("test_2.xml");
+    private File template = new File("template.xsl");
 
-	public void createXML(int[] n)
-	{
-		try
-		{
-			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-			
-			Element entries = document.createElement("entries");
-			document.appendChild(entries);
-			
-			for (int i : n)
-			{
-				String c = Integer.toString(i);
-				
-				Element entry = document.createElement("entry");
-				entries.appendChild(entry);
-			
-				Element field = document.createElement("field");
-				field.setTextContent(c);
-				entry.appendChild(field);
-			}
+    public XML(int[] recList) throws ParserConfigurationException {
+        this.recList = recList;
+        document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    }
 
-			
-			//Сохранить текстовое представление XML документа в файл 
-			Transformer transformer = TransformerFactory.newInstance().newTransformer();
-			
-			//-------------Приводим XML к стандартному выводу---------------------------------
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-			//---------------------------------------------------------------------------------
-			
-			DOMSource source = new DOMSource(document);
-			//StreamResult result = new StreamResult(new File(System.getProperty("user.id")+File.separator+FILENAME));
-			StreamResult result = new StreamResult(new File("1.xml")); // "F:\\java\\test\\1.xml"
-		
-			transformer.transform(source, result);
+    public void createXML() throws TransformerException, FileNotFoundException {
+        System.out.println("create XML_1 file");
+        Element entries = document.createElement("entries");
+        document.appendChild(entries);
+        Text text;
 
-		}
-		catch(ParserConfigurationException | TransformerConfigurationException ex)
-		{
-			Logger.getLogger(ConnectDB.class.getName())
-				.log(Level.SEVERE, null, ex);
-		}
-		catch (TransformerException ex)
-		{
-			Logger.getLogger(ConnectDB.class.getName()).log(Level.SEVERE, null, ex);
-		}
-	}
+        for(int n: recList) {
+            Element entry = document.createElement("entry");
+            Element field = document.createElement("field");
+            text = document.createTextNode(Integer.toString(n));
+            entries.appendChild(entry);
+            entry.appendChild(field);
+            field.appendChild(text);
+        }
 
-	public static void XslTransform() {
-		TransformerFactory factory = TransformerFactory.newInstance();
-		StreamSource xslStream = new StreamSource(new File("template.xsl")); // это щаблон xsl
+        saveXML();
+        XslTransform();
+    }
 
-		StreamSource in = new StreamSource("1.xml");
-		StreamResult out = new StreamResult("2.xml");
+    public void saveXML() throws TransformerException, FileNotFoundException {
+        System.out.println("save file" + fileXMLOne + "\n");
+        Transformer t = TransformerFactory.newInstance().newTransformer();
+        t.setOutputProperty(OutputKeys.INDENT, "yes");
+        t.transform(new DOMSource(document), new StreamResult(new FileOutputStream(fileXMLOne, false)));
+    }
 
-		try {
-			Transformer transformer = factory.newTransformer(xslStream);
-			transformer.transform(in, out);
-		} catch (TransformerException e){ e.printStackTrace(); }
-	}
+    public void XslTransform() {
+        System.out.println("Transform " + fileXMLOne + " file to " + fileXMLTwo + "\n");
+        TransformerFactory factory = TransformerFactory.newInstance();
+        StreamSource xslStream = new StreamSource(template); // Р·Р°РіСЂСѓР·РєР° С€Р°Р±Р»РѕРЅР° xsl
 
-	public static void summaField() throws ParserConfigurationException, SAXException, IOException {
+        StreamSource in = new StreamSource(fileXMLOne);
+        StreamResult out = new StreamResult(fileXMLTwo);
 
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		SAXParser parser = factory.newSAXParser();
+        try {
+            Transformer transformer = factory.newTransformer(xslStream);
+            transformer.transform(in, out);
+        } catch (TransformerException e){
+            System.out.println("Error converting " + fileXMLOne + " file to " + fileXMLTwo);
+            e.printStackTrace();
+        }
+    }
 
-		XMLHandler handler = new XMLHandler();
-		parser.parse(new File("2.xml"), handler);
+    public void totalFieldXmlTwo() {
+        System.out.println("parsing " + fileXMLTwo);
+        try {
+            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(fileXMLTwo);
+            Element element = document.getDocumentElement();
+            System.out.println("\n-------------------------------------------------------");
+            System.out.println("The sum of the values of all \"field\" attributes:\n" +
+                                parsingXmlTwo(element.getElementsByTagName("entry")));
 
-		System.out.println(handler.result);
-	}
+        } catch (SAXException e) {
+            System.out.println("Error parsing file " + fileXMLTwo);
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Error parsing file " + fileXMLTwo);
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            System.out.println("Error parsing file " + fileXMLTwo);
+            e.printStackTrace();
+        }
+    }
 
-	private static class XMLHandler extends DefaultHandler {
-		int result;
-		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-			if (qName.equals("entry")) {
-				result += Integer.parseInt(attributes.getValue("field"));
-			}
-		}
-	}
+    public BigInteger parsingXmlTwo(NodeList nodeList) {
+        BigInteger totalField = new BigInteger("0");
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            if(nodeList.item(i) instanceof Element) {
+                totalField = totalField.add(BigInteger.valueOf(
+                        Integer.parseInt(((Element) nodeList.item(i)).getAttribute("field"))));
+            }
+        }
+        return totalField;
+    }
 
 }
