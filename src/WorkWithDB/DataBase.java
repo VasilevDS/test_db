@@ -1,10 +1,10 @@
-package ConnectDB_oracl;
+package WorkWithDB;
 
 import java.sql.*;
 
-public class ConnectDB {
+public class DataBase {
 
-    private int n;
+    private int numberN;
     private Statement statement;
     private Connection cn;
     private DBCredentials credentials;
@@ -12,23 +12,23 @@ public class ConnectDB {
     private final String queryINSERT = "insert into " + tableName + " values (?)";
     private final String querySELECT = "SELECT * FROM " + tableName;
 
-    public void setN(int n) { this.n = n; }
+    public void setNumberN(int numberN) throws NumberNNotFitException{
+        if(numberN>0) this.numberN = numberN;
+        else throw new NumberNNotFitException("number n does not match");
+    }
+
+    public void setCredentials(DBCredentials credentials) {
+        this.credentials = credentials;
+    }
 
     public Connection getCn() { return cn; }
 
-    public ConnectDB(DBCredentials credentials) throws SQLException, NumberNNotFitException {
-        this.credentials = credentials;
-        setN(credentials.getNumberN());
-        cn = connection();
-        cn.setAutoCommit(false);
-        statement = cn.createStatement();
-    }
-
-    public Connection connection() throws SQLException {
+    public void connection() throws SQLException {
 
         try {
             cn =  DriverManager.getConnection (credentials.getUrl(), credentials.getUser(), credentials.getPassword());
             DatabaseMetaData dma = cn.getMetaData ();
+            cn.setAutoCommit(false);
             // Печать сообщения об успешном соединении
             System.out.println("\nConnected to " + dma.getURL());
             System.out.println("Driver " + dma.getDriverName());
@@ -48,16 +48,17 @@ public class ConnectDB {
                 System.out.println("---");
                 ex = ex.getNextException();
             }
-            return null;
+            return;
         } catch (Exception ex){
             System.out.println(ex);
-            return null;
+            return;
         }
-        return cn;
+
     }
 
     public boolean tableCheck (String tableName) throws SQLException {
         final String query = "select 1 from dual where EXISTS (select * from "+ tableName +")";
+        statement = cn.createStatement();
         boolean result;
         ResultSet rs = statement.executeQuery(query);
         result = rs.next();
@@ -65,10 +66,10 @@ public class ConnectDB {
         return result;
     }
 
-    public void dataInsertion () throws SQLException {
+    public void insertNRecordsInTable () throws SQLException {
 
         System.out.println("Start data insertion");
-
+        statement = cn.createStatement();
         // Если в таблице находились записи, то они удаляются перед вставкой
         // (Это условие можно удалить и оставить удаление в любом случае)
         if (tableCheck(tableName)) {
@@ -78,7 +79,7 @@ public class ConnectDB {
 
         PreparedStatement preparedStatement = cn.prepareStatement(queryINSERT);
         int a = 1;
-        while (a <= n) {
+        while (a <= numberN) {
             preparedStatement.setInt(1, a);
             a++;
             preparedStatement.addBatch();
@@ -87,8 +88,9 @@ public class ConnectDB {
         System.out.println("Finish data insertion\n");
     }
 
-    public int[] dataSelect () throws SQLException {
-        int[] result = new int[n];
+    public int[] getDataFromTable () throws SQLException {
+        int[] result = new int[numberN];
+        statement = cn.createStatement();
 
         System.out.println("Start read data");
         ResultSet rs = statement.executeQuery (querySELECT);

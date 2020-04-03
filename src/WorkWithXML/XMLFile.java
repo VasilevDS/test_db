@@ -1,4 +1,4 @@
-package ConnectDB_oracl;
+package WorkWithXML;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -18,20 +18,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 
-public class XML {
+public class XMLFile {
     private Document document;
-    private int[] recList;
     private File fileXMLOne = new File("test_1.xml");
     private File fileXMLTwo = new File("test_2.xml");
     private File template = new File("template.xsl");
 
-    public XML(int[] recList) throws ParserConfigurationException {
-        this.recList = recList;
-        document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-    }
 
-    public void createXML() throws TransformerException, FileNotFoundException {
+    public void createXML(int[] recList) throws TransformerException, FileNotFoundException, ParserConfigurationException {
         System.out.println("create XML_1 file");
+        document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         Element entries = document.createElement("entries");
         document.appendChild(entries);
         Text text;
@@ -46,7 +42,6 @@ public class XML {
         }
 
         saveXML();
-        XslTransform();
     }
 
     public void saveXML() throws TransformerException, FileNotFoundException {
@@ -56,7 +51,7 @@ public class XML {
         t.transform(new DOMSource(document), new StreamResult(new FileOutputStream(fileXMLOne, false)));
     }
 
-    public void XslTransform() {
+    public void creatingXml2FromXl1() {
         System.out.println("Transform " + fileXMLOne + " file to " + fileXMLTwo + "\n");
         TransformerFactory factory = TransformerFactory.newInstance();
         StreamSource xslStream = new StreamSource(template); // загрузка шаблона xsl

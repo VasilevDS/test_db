@@ -1,4 +1,7 @@
-package ConnectDB_oracl;
+import WorkWithDB.DBCredentials;
+import WorkWithDB.DataBase;
+import WorkWithDB.NumberNNotFitException;
+import WorkWithXML.XMLFile;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -10,40 +13,37 @@ public class Main {
 
     public static void main(String[] args) throws SQLException {
 
-        DBCredentials credentials = new DBCredentials();
-
         String url = "jdbc:oracle:thin:@localhost:1521:dborcl";
         String user = "company";
         String password = "123456";
-        int numbN = 2000000;
+        int numbN = 50;
 
-        credentials.setUrl(url);
-        credentials.setUser(user);
-        credentials.setPassword(password);
+        DBCredentials credentials = new DBCredentials(url, user, password);
+
+        long startTime =System.currentTimeMillis();
+        DataBase dataBase = new DataBase();
+
         try {
-            credentials.setNumberN(numbN);
+            dataBase.setCredentials(credentials);
+            dataBase.setNumberN(numbN);
         } catch (NumberNNotFitException e) {
             System.out.println("The number N must be greater than 0");
             return;
         }
-
-        long startTime =System.currentTimeMillis();
-        ConnectDB connectDB = null;
         try {
-            // подключение к БД
-            connectDB = new ConnectDB(credentials);
-            // вставка N записей в таблицу
-            connectDB.dataInsertion();
-            // запрос данных из таблицы
-            int[] temp = connectDB.dataSelect();
-            connectDB.close();
+            dataBase.connection();                      // подключение к БД
+            dataBase.insertNRecordsInTable();           // вставка N записей в таблицу
+            int[] temp = dataBase.getDataFromTable();   // запрос данных из таблицы
+            dataBase.close();
 
 
-            XML xml = new XML(temp);
-            xml.createXML();
-            xml.totalFieldXmlTwo();
+            XMLFile xmlFile = new XMLFile();
+            xmlFile.createXML(temp);        // создание файла xml1
+            xmlFile.creatingXml2FromXl1();  // создание xml2 из трасформации xml1
+            xmlFile.totalFieldXmlTwo();     // арифм. сумма поля Field
+
         } catch (SQLException ex){
-            Connection connection = connectDB.getCn();
+            Connection connection = dataBase.getCn();
             if (connection != null) {
                 connection.rollback();
                 connection.setAutoCommit(true);
@@ -58,14 +58,9 @@ public class Main {
                 System.out.println("---");
                 ex = ex.getNextException();
             }
-        } catch (NumberNNotFitException e) {
-            e.printStackTrace();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (TransformerException e) {
-            e.printStackTrace();
+        } catch (ParserConfigurationException|FileNotFoundException|TransformerException ex) {
+            ex.printStackTrace();
+            System.out.println(ex.getMessage());
         }
         long timeSpent =System.currentTimeMillis()- startTime;
         System.out.println("lead time: "+ timeSpent +" ms");
